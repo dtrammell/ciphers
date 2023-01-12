@@ -126,8 +126,9 @@ $ZODIAC = [
 
 		# Search the zodiac for the symbol
 		$ZODIAC.each { |z|
-puts "Matching: '#{char}' == '#{z[:symbol]}'"
-			if char == z[:symbol]
+puts "Matching: '#{char}' (#{char.ord}) == '#{z[:symbol]} (#{z[:symbol].ord})'"
+#			if char == z[:symbol]
+			if char.ord == z[:symbol].ord
 				# Return polarity as binary. :positive is 1, :negative is 0
 				case z[:polarity]
 				when :positive
@@ -171,9 +172,9 @@ puts "Matching: '#{char}' == '#{z[:symbol]}'"
 		ciphertext.split('').each { |c|
 			b = self.decode_binary( c )
 
-			second_bitstring << b.to_s
+			bitstring << b.to_s
 		}
-		puts "Bitstring: #{second_bitstring}"
+		puts "Bitstring: #{bitstring}"
 
 		# Pack the decoded binary back into an ascii string
 		result = bitstring.pack('a*')
