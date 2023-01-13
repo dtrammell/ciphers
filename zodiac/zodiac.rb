@@ -22,13 +22,28 @@ $ZODIAC = [
 		:ruler      => {
 			:modern  => :mars,
 			:classic => :mars
-		},
+		}
 	},
 	{
-		:sign     => 'Taurus',
-		:house    => 2,
-		:symbol   => '♉︎',
-		:polarity => :negative,
+		:sign       => 'Taurus',
+		:house      => 2,
+		:symbol     => '♉︎',
+		:gloss      => 'Bull',
+		:sunsigndates => {
+			:begin => '04-20',
+			:end   => '05-20'
+		},
+		:polarity   => :negative,
+		:modality   => :fixed,
+		:triplicity => :earth,
+		:season     => {
+			:northern => :spring,
+			:southern => :autumn
+		},
+		:ruler      => {
+			:modern  => :venus,
+			:classic => :venus
+		}
 	},
 	{
 		:sign     => 'Gemini',
@@ -97,43 +112,42 @@ $ZODIAC = [
 		raise "ERROR: bit argument (#{bit}) is neither 1 nor 0." if (bit != 1 && bit != 0)
 
 		# Identify if we are targeting positive or negative zodiac signs
-#		target = bit == 1 ? :positive : :negative
-		if bit == 1 then
-			target = :positive
-		else
-			target = :negative
-		end
+		target = bit == 1 ? :positive : :negative
 
 		# Choose a random zodiac sign from the 6 available for the polarity
 		r = rand(6) + 1
-#puts "Chose Zodiac ##{r}"
+		num = r.dup
 
 		# Step through the zodiac set until we find the one that was randomly selected
 		$ZODIAC.each { |z| 
-#pp z
 			r -= 1 if z[:polarity] == target
 			if r == 0
-#puts "Bit: #{bit} = #{z[:symbol]}"
+				puts "Bit: #{bit} = #{z[:symbol]}" if $DEBUG
+				puts "Chose Zodiac ##{num}: #{z[:symbol]}" if $DEBUG
 				return z[:symbol].dup
 			end
 		}	
 	
 		raise "ERROR: End of method reached without returning a symbol."
-	end # get_binary_random_zodiac
+	end # encode_binary
 
 	# Return the bit associated with a zodiac symbol. :positive is 1, :negative is 0
 	def decode_binary( char )
 
 		# Search the zodiac for the symbol
 		$ZODIAC.each { |z|
-puts "Matching: '#{char}' (#{char.ord}) == '#{z[:symbol]} (#{z[:symbol].ord})'"
-#			if char == z[:symbol]
+			# Step through the astrology symbols until there is a match
+			puts "Matching: '#{char}' (#{char.ord}) == '#{z[:symbol]} (#{z[:symbol].ord})'" if $DEBUG
 			if char.ord == z[:symbol].ord
+				puts "MATCH!!!" if $DEBUG
+
 				# Return polarity as binary. :positive is 1, :negative is 0
 				case z[:polarity]
 				when :positive
+					puts 'Symbol is POSITIVE: 1' if $DEBUG
 					return 1
 				when :negative
+					puts 'Symbol is NEGATIVE: 1' if $DEBUG
 					return 0
 				else
 					raise 'ERROR: Zodiac polarity is neither positive nor negative'
@@ -142,46 +156,56 @@ puts "Matching: '#{char}' (#{char.ord}) == '#{z[:symbol]} (#{z[:symbol].ord})'"
 		}
 
 		raise "ERROR: End of method reached without returning a bit."
-	end
+	end # decode_binary
 
 	def encode( cleartext )
-		puts "Encoding:    \"#{cleartext}\""
-
 		# Unpack the string into binary, represent as a string of 1's and 0's
-		bitstring = cleartext.unpack('b*').join
-		puts "Bitstring:   #{bitstring}"
+		bitstring = cleartext.unpack('B*').join
+		puts "Bitstring:  #{bitstring}" if $VERBOSE
 
 		# Encode
 		ciphertext = ''
 		bitstring.split('').each { |c|
-#puts "Encoding: #{c}"
+			puts "Encoding: #{c}" if $DEBUG
 			s = self.encode_binary( c.to_i )
-#puts "Encoded:  #{s}"
+			puts "Encoded:  #{s}" if $DEBUG
 
 			ciphertext << s
 		}
-		puts "Ciphertext: \"#{ciphertext}\""
 
 		return ciphertext
-	end
+	end # encode
 
 	# Decode string of astrology symbols
 	def decode( ciphertext )
+		# Step through characters and convert to bitstring
 		bitstring = ''
+		ciphertext.chars.each { |c|
+			# Skip the variation selector characters
+			next if c.ord == 65038
 
-		ciphertext.split('').each { |c|
+			puts "Matching: %s" % [ c ] if $DEBUG
+
+			# Translate the symbol into a bit and add it to the bitstring
 			b = self.decode_binary( c )
+			bitstring << b.to_s if b
 
-			bitstring << b.to_s
+			puts "Bitstring: %s" % [ bitstring ] if $DEBUG
 		}
-		puts "Bitstring: #{bitstring}"
+		puts "Bitstring: #{bitstring}" if $VERBOSE
 
 		# Pack the decoded binary back into an ascii string
-		result = bitstring.pack('a*')
-		puts "Result:    \"#{result}\""
+		# TODO: Figure out how to do this with pack
+#		binary = bitstring.to_i(2)
+#		result = binary.pack('b*')
 
-		return result
-	end
+		cleartext = ''
+		bitstring.scan(/[01]{8}/).map { |e|
+			e.to_i(2)
+		}.inject cleartext, &:concat
+
+		return cleartext
+	end # decode
 
 end # Class ZodiacCipher
 
@@ -194,15 +218,15 @@ zodiac = ZodiacCipher.new
 case ARGV[0]
 when '-e'
 	# Encode
-	zodiac.encode( ARGV[1] )
+	puts "Encoding:   \"#{ARGV[1]}\""
+	ciphertext = zodiac.encode( ARGV[1] )
+	puts "Ciphertext: \"#{ciphertext}\""
 when '-d'
 	# Decode
-	zodiac.decode( ARGV[1] )
+	puts "Decoding:  \"#{ARGV[1]}\""
+	cleartext = zodiac.decode( ARGV[1] )
+	puts "Cleartext: \"#{cleartext}\""
 else
-	raise "ERROR: First argument must be either -e or -d for encode or decide, respectively." if mode != '-e' || mode != '-d'
+	raise "ERROR: First argument must be either -e or -d for encode or decode, respectively." if mode != '-e' || mode != '-d'
 end
-
-
-
-
 
