@@ -34,7 +34,7 @@ class ChessAlgebraicNotationCipher
 				# Skip any characters we can't encode
 			end
 		end
-		return encoded
+		return encoded.chop
 	end
 
 	# Decode ciphertext
