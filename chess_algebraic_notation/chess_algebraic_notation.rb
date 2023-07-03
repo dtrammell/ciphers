@@ -4,6 +4,14 @@
 
 # Written mostly by ChatGPT, with a little help and cleanup by Dustin D. Trammell
 
+# This cipher is a substitution cipher where a set of chess "moves" consisting of
+# a piece letter and a set of chess board coordinates is generated as well as an
+# ASCII character set consisting of A-Z, 0-9, and many special characters.
+# These two sets are then randomly assigned to each other using a random seed
+# to create a translation table between the two.
+#
+# Seed value is defaulted to 3, change it for a different translation table.
+
 class ChessAlgebraicNotationCipher
 	attr_reader :trans, :decode_trans
 
